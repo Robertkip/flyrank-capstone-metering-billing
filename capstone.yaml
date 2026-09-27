@@ -1,0 +1,15 @@
+name: flyrank-capstone-metering-billing
+capstone: Usage Metering & Billing Engine
+run: docker compose up --build -d
+seed: docker compose exec api python -m scripts.seed
+test: docker compose exec api python -m pytest -q
+base_url: http://localhost:8000
+auth: {header: X-API-Key, demo_keys: [sk_tenant_demo_acme_free, sk_tenant_demo_boundary]}
+endpoints:
+  - {method: GET,  path: /health}
+  - {method: GET,  path: /pricing, probe: 5}
+  - {method: POST, path: /tenants}
+  - {method: POST, path: /generate, headers: [X-API-Key, Idempotency-Key], probe: [1, 2]}
+  - {method: GET,  path: /usage, headers: [X-API-Key], probe: [2, 3, 5]}
+  - {method: POST, path: /billing/checkout, headers: [X-API-Key], probe: 3}
+  - {method: POST, path: /webhooks/stripe, headers: [Stripe-Signature], probe: [3, 4]}
